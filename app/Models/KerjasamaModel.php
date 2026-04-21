@@ -6,6 +6,8 @@ use Illuminate\Database\Eloquent\Model;
 
 class KerjasamaModel extends Model
 {
+    protected $connection = 'mysql_ci';
+
     protected $table = 'tb_pengajuan_kerjasama';
 
     protected $primaryKey = 'id_pengajuan';
@@ -23,4 +25,14 @@ class KerjasamaModel extends Model
         'status_pengajuan',
         'alasan',
     ];
+
+    // relasi 
+    public function po()
+    {
+        return $this->hasMany(
+            POModel::class,
+            'id_pengajuan',
+            'id_pengajuan'
+        );
+    }
 }

@@ -27,6 +27,27 @@ class POResource extends Resource
 
     protected static ?string $recordTitleAttribute = 'id_pengajuan';
 
+    // ADD
+    protected function getRedirectUrl(): string
+    {
+        return $this->getResource()::getUrl('index');
+    }
+    public static function getNavigationGroup(): ?string
+    {
+        return 'Master Data';
+    }
+    public static function getModelLabel(): string
+    {
+        return 'Manajemen PO';
+    }
+    public static function getPluralModelLabel(): string
+    {
+        return 'Data Manajemen PO';
+    }
+    protected static ?string $navigationLabel = 'Manajemen PO';
+    protected static ?int    $navigationSort  = 1;
+    // LAST ADD
+
     public static function form(Schema $schema): Schema
     {
         return POForm::configure($schema);

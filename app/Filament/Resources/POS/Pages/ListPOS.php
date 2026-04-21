@@ -13,7 +13,9 @@ class ListPOS extends ListRecords
     protected function getHeaderActions(): array
     {
         return [
-            CreateAction::make(),
+            CreateAction::make()
+                ->label('Purchase Order')
+                ->icon('heroicon-o-plus'),
         ];
     }
 }
