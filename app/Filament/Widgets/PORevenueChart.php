@@ -2,6 +2,7 @@
 
 namespace App\Filament\Widgets;
 
+use App\Models\PembayaranModel;
 use App\Models\POModel;
 use Filament\Widgets\ChartWidget;
 
@@ -45,22 +46,30 @@ class PORevenueChart extends ChartWidget
             'Des',
         ];
 
-        // ── Dataset 1 : Nilai harga_deal per bulan ──────────────────────────
+        // ── 1. NILAI DEAL (KONTRAK) ─────────────────────────
         $nilaiDeal = collect(range(1, 12))->map(function ($bulan) use ($year) {
             return (float) POModel::whereYear('tanggal_po', $year)
                 ->whereMonth('tanggal_po', $bulan)
                 ->whereIn('status_po', ['final', 'diajukan'])
-                ->sum('harga_deal') / 1_000_000; // dalam juta rupiah
+                ->sum('harga_deal') / 1_000_000;
         })->toArray();
 
-        // ── Dataset 2 : Nilai harga_penawaran per bulan ─────────────────────
+        // ── 2. NILAI PENAWARAN ──────────────────────────────
         $nilaiPenawaran = collect(range(1, 12))->map(function ($bulan) use ($year) {
             return (float) POModel::whereYear('tanggal_po', $year)
                 ->whereMonth('tanggal_po', $bulan)
                 ->sum('harga_penawaran') / 1_000_000;
         })->toArray();
 
-        // ── Dataset 3 : Jumlah PO per bulan (sumbu Y kanan via type bar) ────
+        // ── 3. PEMBAYARAN REAL (INI YANG BARU & BENAR) 🔥 ───
+        $nilaiPembayaran = collect(range(1, 12))->map(function ($bulan) use ($year) {
+            return (float) POModel::whereYear('tanggal_po', $year)
+                ->whereMonth('tanggal_po', $bulan)
+                ->where('status_pembayaran', 'paid')
+                ->sum('harga_deal') / 1_000_000;
+        })->toArray();
+
+        // ── 4. JUMLAH PO ────────────────────────────────────
         $jumlahPO = collect(range(1, 12))->map(function ($bulan) use ($year) {
             return POModel::whereYear('tanggal_po', $year)
                 ->whereMonth('tanggal_po', $bulan)
@@ -69,40 +78,53 @@ class PORevenueChart extends ChartWidget
 
         return [
             'datasets' => [
+
+                // DEAL
                 [
-                    'label'           => 'Harga Deal (Juta Rp)',
-                    'data'            => $nilaiDeal,
-                    'borderColor'     => '#10b981',       // emerald
+                    'label' => 'Harga Deal (Juta Rp)',
+                    'data' => $nilaiDeal,
+                    'borderColor' => '#10b981',
                     'backgroundColor' => 'rgba(16,185,129,0.12)',
-                    'fill'            => true,
-                    'tension'         => 0.4,
-                    'yAxisID'         => 'y',
-                    'type'            => 'line',
-                    'pointBackgroundColor' => '#10b981',
-                    'pointRadius'     => 5,
-                    'pointHoverRadius' => 8,
+                    'fill' => true,
+                    'tension' => 0.4,
+                    'yAxisID' => 'y',
+                    'type' => 'line',
                 ],
+
+                // PENAWARAN
                 [
-                    'label'           => 'Harga Penawaran (Juta Rp)',
-                    'data'            => $nilaiPenawaran,
-                    'borderColor'     => '#f59e0b',       // amber
+                    'label' => 'Harga Penawaran (Juta Rp)',
+                    'data' => $nilaiPenawaran,
+                    'borderColor' => '#f59e0b',
                     'backgroundColor' => 'rgba(245,158,11,0.08)',
-                    'fill'            => false,
-                    'tension'         => 0.4,
-                    'yAxisID'         => 'y',
-                    'type'            => 'line',
-                    'borderDash'      => [5, 5],
-                    'pointBackgroundColor' => '#f59e0b',
-                    'pointRadius'     => 4,
+                    'fill' => false,
+                    'tension' => 0.4,
+                    'borderDash' => [5, 5],
+                    'yAxisID' => 'y',
+                    'type' => 'line',
                 ],
+
+                // 🔥 PEMBAYARAN REAL (INI YANG PALING PENTING)
                 [
-                    'label'           => 'Jumlah PO',
-                    'data'            => $jumlahPO,
-                    'backgroundColor' => 'rgba(99,102,241,0.25)',  // indigo
-                    'borderColor'     => 'rgba(99,102,241,0.6)',
-                    'borderRadius'    => 6,
-                    'yAxisID'         => 'y1',
-                    'type'            => 'bar',
+                    'label' => 'Pembayaran Real (Juta Rp)',
+                    'data' => $nilaiPembayaran,
+                    'borderColor' => '#3b82f6',
+                    'backgroundColor' => 'rgba(59,130,246,0.12)',
+                    'fill' => true,
+                    'tension' => 0.4,
+                    'yAxisID' => 'y',
+                    'type' => 'line',
+                ],
+
+                // JUMLAH PO
+                [
+                    'label' => 'Jumlah PO',
+                    'data' => $jumlahPO,
+                    'backgroundColor' => 'rgba(99,102,241,0.25)',
+                    'borderColor' => 'rgba(99,102,241,0.6)',
+                    'borderRadius' => 6,
+                    'yAxisID' => 'y1',
+                    'type' => 'bar',
                 ],
             ],
             'labels' => $bulanLabel,

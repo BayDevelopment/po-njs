@@ -2,6 +2,7 @@
 
 namespace App\Filament\Widgets;
 
+use App\Models\PembayaranModel;
 use App\Models\POModel;
 use Carbon\Carbon;
 use Filament\Widgets\StatsOverviewWidget;
@@ -15,44 +16,46 @@ class POStatsOverview extends StatsOverviewWidget
     {
         $now = Carbon::now();
 
-        // ── Total semua PO (aktif, tidak terhapus) ──────────────────────────
+        // ── Total semua PO ──────────────────────────
         $totalPO = POModel::count();
 
-        // ── PO Aktif Bulan Ini (berdasarkan tanggal_po) ─────────────────────
+        // ── PO Bulan Ini ────────────────────────────
         $poBulanIni = POModel::whereMonth('tanggal_po', $now->month)
             ->whereYear('tanggal_po', $now->year)
             ->count();
 
-        // ── PO sedang berjalan: status_po = diajukan | final
-        //    DAN status_kerjasama = deal ────────────────────────────────────
+        // ── PO Berjalan ─────────────────────────────
         $poBerjalan = POModel::whereIn('status_po', ['diajukan', 'final'])
             ->where('status_kerjasama', 'deal')
             ->count();
 
-        // ── PO Selesai: status_kerjasama = selesai ───────────────────────────
+        // ── PO Selesai ──────────────────────────────
         $poSelesai = POModel::where('status_kerjasama', 'selesai')->count();
 
-        // ── Total nilai harga_deal yang sudah selesai (paid) ─────────────────
-        $totalRevenue = POModel::where('status_kerjasama', 'selesai')
-            ->where('status_pembayaran', 'paid')
-            ->sum('harga_deal');
+        // ── TOTAL REVENUE (DARI PEMBAYARAN) 🔥 ─────
+        $totalRevenue = PembayaranModel::sum('jumlah_bayar');
 
-        // ── Trend 6 bulan terakhir untuk sparkline ──────────────────────────
+        // ── TREND PO ───────────────────────────────
         $trendBulanan = collect(range(5, 0))->map(function ($i) use ($now) {
             return POModel::whereMonth('tanggal_po', $now->copy()->subMonths($i)->month)
                 ->whereYear('tanggal_po', $now->copy()->subMonths($i)->year)
                 ->count();
         })->toArray();
 
+        // ── TREND REVENUE 🔥 ───────────────────────
         $trendRevenue = collect(range(5, 0))->map(function ($i) use ($now) {
-            return (int) POModel::where('status_kerjasama', 'selesai')
-                ->where('status_pembayaran', 'paid')
-                ->whereMonth('tanggal_pembayaran', $now->copy()->subMonths($i)->month)
-                ->whereYear('tanggal_pembayaran', $now->copy()->subMonths($i)->year)
-                ->sum('harga_deal');
+            return (int) PembayaranModel::whereMonth(
+                'tanggal_pembayaran',
+                $now->copy()->subMonths($i)->month
+            )
+                ->whereYear(
+                    'tanggal_pembayaran',
+                    $now->copy()->subMonths($i)->year
+                )
+                ->sum('jumlah_bayar');
         })->toArray();
 
-        // ── Hitung persentase naik/turun dibanding bulan lalu ───────────────
+        // ── PERBANDINGAN BULAN ─────────────────────
         $poBulanLalu = POModel::whereMonth('tanggal_po', $now->copy()->subMonth()->month)
             ->whereYear('tanggal_po', $now->copy()->subMonth()->year)
             ->count();
@@ -67,14 +70,12 @@ class POStatsOverview extends StatsOverviewWidget
 
         return [
 
-            // ── CARD 1 : Total Semua PO ─────────────────────────────────────
             Stat::make('Total Purchase Order', number_format($totalPO))
                 ->description('Semua PO terdaftar')
                 ->descriptionIcon('heroicon-m-document-text')
                 ->chart($trendBulanan)
                 ->color('primary'),
 
-            // ── CARD 2 : PO Bulan Ini ───────────────────────────────────────
             Stat::make('PO Bulan Ini', number_format($poBulanIni))
                 ->description($trendLabel)
                 ->descriptionIcon(
@@ -85,15 +86,13 @@ class POStatsOverview extends StatsOverviewWidget
                 ->chart($trendBulanan)
                 ->color($trendColor),
 
-            // ── CARD 3 : PO Sedang Berjalan ─────────────────────────────────
             Stat::make('PO Sedang Berjalan', number_format($poBerjalan))
                 ->description('Status diajukan / final · Kerjasama deal')
                 ->descriptionIcon('heroicon-m-arrow-path')
                 ->color('warning'),
 
-            // ── CARD 4 : PO Selesai + Total Revenue ─────────────────────────
             Stat::make('PO Selesai', number_format($poSelesai))
-                ->description('Revenue terbayar: Rp ' . number_format($totalRevenue, 0, ',', '.'))
+                ->description('Revenue: Rp ' . number_format($totalRevenue, 0, ',', '.'))
                 ->descriptionIcon('heroicon-m-check-badge')
                 ->chart($trendRevenue)
                 ->color('success'),

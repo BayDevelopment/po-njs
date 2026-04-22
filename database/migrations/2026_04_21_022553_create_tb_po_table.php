@@ -6,12 +6,9 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
-        Schema::create('tb_po', function (Blueprint $table) {
+        Schema::connection('mysql_ci')->create('tb_po', function (Blueprint $table) {
 
             $table->id('id_po');
 
@@ -51,9 +48,6 @@ return new class extends Migration
             ])->default('negosiasi');
 
             $table->string('dokumen_invoice')->nullable();
-            $table->string('bukti_pembayaran')->nullable();
-
-            $table->date('tanggal_pembayaran')->nullable();
 
             $table->enum('status_pembayaran', [
                 'unpaid',
@@ -66,7 +60,7 @@ return new class extends Migration
             $table->timestamps();
             $table->softDeletes();
 
-            // ✅ cukup SATU FK
+            // ✅ FK sekarang AMAN karena 1 database (njs)
             $table->foreign('id_pengajuan')
                 ->references('id_pengajuan')
                 ->on('tb_pengajuan_kerjasama')
@@ -77,6 +71,6 @@ return new class extends Migration
 
     public function down(): void
     {
-        Schema::dropIfExists('tb_po');
+        Schema::connection('mysql_ci')->dropIfExists('tb_po');
     }
 };

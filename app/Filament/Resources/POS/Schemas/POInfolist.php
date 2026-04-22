@@ -57,26 +57,62 @@ class POInfolist
                     ->columnSpanFull()  // ← ini
                     ->columns(3)
                     ->schema([
+                        // DOKUMEN PO - Tersedia (bisa klik)
                         TextEntry::make('dokumen_po')
                             ->label('Dokumen PO')
                             ->badge()
-                            ->getStateUsing(fn($record) => $record->dokumen_po ?? 'kosong')
-                            ->formatStateUsing(fn($state) => $state !== 'kosong' ? 'Tersedia' : 'Dokumen Kosong')
-                            ->color(fn($state) => $state !== 'kosong' ? 'success' : 'danger'),
+                            ->getStateUsing(fn($record) => $record->dokumen_po)
+                            ->formatStateUsing(fn() => 'Tersedia')
+                            ->color('success')
+                            ->url(fn($state) => asset('storage/' . $state))
+                            ->openUrlInNewTab()
+                            ->visible(fn($record) => !empty($record->dokumen_po)),
 
+                        // DOKUMEN PO - Kosong (tidak bisa klik)
+                        TextEntry::make('dokumen_po_kosong')
+                            ->label('Dokumen PO')
+                            ->badge()
+                            ->getStateUsing(fn() => 'Dokumen Kosong')
+                            ->color('danger')
+                            ->visible(fn($record) => empty($record->dokumen_po)),
+
+                        // INVOICE - Tersedia
                         TextEntry::make('dokumen_invoice')
                             ->label('Invoice')
                             ->badge()
-                            ->getStateUsing(fn($record) => $record->dokumen_invoice ?? 'kosong')
-                            ->formatStateUsing(fn($state) => $state !== 'kosong' ? 'Tersedia' : 'Dokumen Kosong')
-                            ->color(fn($state) => $state !== 'kosong' ? 'success' : 'danger'),
+                            ->getStateUsing(fn($record) => $record->dokumen_invoice)
+                            ->formatStateUsing(fn() => 'Tersedia')
+                            ->color('success')
+                            ->url(fn($state) => asset('storage/' . $state))
+                            ->openUrlInNewTab()
+                            ->visible(fn($record) => !empty($record->dokumen_invoice)),
 
+                        // INVOICE - Kosong
+                        TextEntry::make('dokumen_invoice_kosong')
+                            ->label('Invoice')
+                            ->badge()
+                            ->getStateUsing(fn() => 'Dokumen Kosong')
+                            ->color('danger')
+                            ->visible(fn($record) => empty($record->dokumen_invoice)),
+
+                        // BUKTI PEMBAYARAN - Tersedia
                         TextEntry::make('bukti_pembayaran')
                             ->label('Bukti Pembayaran')
                             ->badge()
-                            ->getStateUsing(fn($record) => $record->bukti_pembayaran ?? 'kosong')
-                            ->formatStateUsing(fn($state) => $state !== 'kosong' ? 'Tersedia' : 'Dokumen Kosong')
-                            ->color(fn($state) => $state !== 'kosong' ? 'success' : 'danger'),
+                            ->getStateUsing(fn($record) => $record->bukti_pembayaran)
+                            ->formatStateUsing(fn() => 'Tersedia')
+                            ->color('success')
+                            ->url(fn($state) => asset('storage/' . $state))
+                            ->openUrlInNewTab()
+                            ->visible(fn($record) => !empty($record->bukti_pembayaran)),
+
+                        // BUKTI PEMBAYARAN - Kosong
+                        TextEntry::make('bukti_pembayaran_kosong')
+                            ->label('Bukti Pembayaran')
+                            ->badge()
+                            ->getStateUsing(fn() => 'Dokumen Kosong')
+                            ->color('danger')
+                            ->visible(fn($record) => empty($record->bukti_pembayaran)),
                     ]),
 
             ]);

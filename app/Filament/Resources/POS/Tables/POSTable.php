@@ -81,13 +81,6 @@ class POSTable
                     ->getStateUsing(fn($record) => $record->dokumen_invoice ?? 'kosong')
                     ->formatStateUsing(fn($state) => $state !== 'kosong' ? 'Tersedia' : 'Dokumen Kosong')
                     ->color(fn($state) => $state !== 'kosong' ? 'success' : 'danger'),
-
-                TextColumn::make('bukti_pembayaran')
-                    ->label('Bukti Bayar')
-                    ->badge()
-                    ->getStateUsing(fn($record) => $record->bukti_pembayaran ?? 'kosong')
-                    ->formatStateUsing(fn($state) => $state !== 'kosong' ? 'Tersedia' : 'Dokumen Kosong')
-                    ->color(fn($state) => $state !== 'kosong' ? 'success' : 'danger'),
             ])
             ->filters([
                 TrashedFilter::make(),

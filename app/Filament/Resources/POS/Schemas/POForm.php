@@ -106,15 +106,6 @@ class POForm
                             ])
                             ->required()
                             ->default('negosiasi'),
-
-                        Select::make('status_pembayaran')
-                            ->options([
-                                'unpaid' => 'Belum Bayar',
-                                'partial' => 'Sebagian',
-                                'paid' => 'Lunas',
-                            ])
-                            ->required()
-                            ->default('unpaid'),
                     ])
                     ->columns(1),
 
@@ -125,10 +116,14 @@ class POForm
                             ->label('Dokumen PO')
                             ->directory('po')
                             ->acceptedFileTypes(['application/pdf'])
-                            ->maxSize(2048) // 2MB
+                            ->maxSize(2048)
+                            ->multiple(false)
                             ->required()
+                            ->rules(['mimes:pdf'])
                             ->validationMessages([
                                 'required' => 'Dokumen PO wajib diupload',
+                                'mimes'    => 'Dokumen PO harus berformat PDF',
+                                'max'      => 'Ukuran file maksimal 2MB',
                             ]),
 
                         FileUpload::make('dokumen_invoice')
@@ -136,30 +131,17 @@ class POForm
                             ->directory('invoice')
                             ->acceptedFileTypes(['application/pdf'])
                             ->maxSize(2048)
+                            ->multiple(false)
+                            ->rules(['mimes:pdf'])
                             ->visible(fn($get) => $get('status_po') === 'final')
                             ->required(fn($get) => $get('status_po') === 'final')
                             ->validationMessages([
                                 'required' => 'Invoice wajib diupload jika PO sudah final',
+                                'mimes'    => 'Invoice harus berformat PDF',
+                                'max'      => 'Ukuran file maksimal 2MB',
                             ]),
-
-                        FileUpload::make('bukti_pembayaran')
-                            ->label('Bukti Pembayaran')
-                            ->directory('pembayaran')
-                            ->acceptedFileTypes(['application/pdf'])
-                            ->maxSize(2048)
-                            ->visible(fn($get) => $get('status_pembayaran') !== 'unpaid'),
                     ])
                     ->columns(1),
-
-                // 🔹 PEMBAYARAN
-                Section::make('Pembayaran')
-                    ->schema([
-                        DatePicker::make('tanggal_pembayaran')
-                            ->required(fn($get) => $get('status_pembayaran') === 'paid')
-                            ->validationMessages([
-                                'required' => 'Tanggal pembayaran wajib diisi jika sudah dibayar',
-                            ]),
-                    ]),
 
                 // 🔹 KETERANGAN
                 Section::make('Keterangan')
