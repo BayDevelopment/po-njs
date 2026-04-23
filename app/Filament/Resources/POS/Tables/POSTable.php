@@ -103,7 +103,7 @@ class POSTable
                         ->icon('heroicon-o-trash')
                         ->color('danger')
                         ->requiresConfirmation()
-                        ->modalHeading('Hapus Cabang?')
+                        ->modalHeading('Hapus PO?')
                         ->modalDescription('Purchase Order akan dihapus permanen dan tidak dapat dikembalikan.')
                         ->modalSubmitActionLabel('Ya, Hapus')
                         ->successNotification(

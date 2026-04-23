@@ -45,23 +45,22 @@ class PembayaranForm
                     ->helperText('Isi 1 jika bayar lunas sekaligus, atau sesuai urutan cicilan (DP=1, Pelunasan=2, dst)')
                     ->minValue(1)
                     ->maxValue(99)
-                    ->rules([
-                        function (callable $get) {
-                            return function (string $attribute, $value, \Closure $fail) use ($get) {
-                                $idPo = $get('id_po'); // ✅ cara benar ambil value field lain di Filament
+                    ->rule(function (callable $get, $record) { // ← tambah $record
+                        return function (string $attribute, $value, \Closure $fail) use ($get, $record) {
+                            $idPo = $get('id_po');
+                            if (!$idPo) return;
 
-                                if (!$idPo) return;
+                            $exists = \App\Models\PembayaranModel::withoutTrashed()
+                                ->where('id_po', $idPo)
+                                ->where('termin', $value)
+                                ->when($record, fn($q) => $q->where('id_pembayaran', '!=', $record->id_pembayaran)) // ← ignore record ini
+                                ->exists();
 
-                                $exists = \App\Models\PembayaranModel::where('id_po', $idPo)
-                                    ->where('termin', $value)
-                                    ->exists();
-
-                                if ($exists) {
-                                    $fail("Termin ke-{$value} untuk PO ini sudah ada.");
-                                }
-                            };
-                        }
-                    ])
+                            if ($exists) {
+                                $fail("Termin ke-{$value} untuk PO ini sudah ada.");
+                            }
+                        };
+                    })
                     ->validationMessages([
                         'required' => 'Termin wajib diisi',
                         'min'      => 'Termin minimal 1',
@@ -124,6 +123,20 @@ class PembayaranForm
                     ->required()
                     ->validationMessages([
                         'required' => 'Metode pembayaran wajib dipilih',
+                    ]),
+
+                Select::make('status_pembayaran')
+                    ->label('Status Pembayaran')
+                    ->options([
+                        'unpaid'  => 'Unpaid',
+                        'partial' => 'Partial',
+                        'paid'    => 'Paid',
+                    ])
+                    ->default('unpaid')
+                    ->required()
+                    ->native(false)
+                    ->validationMessages([
+                        'required' => 'Status pembayaran wajib dipilih',
                     ]),
 
                 // ── BUKTI PEMBAYARAN ─────────────────────

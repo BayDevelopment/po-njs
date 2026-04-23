@@ -2,11 +2,14 @@
 
 namespace App\Filament\Resources\Pembayarans\Tables;
 
+use Filament\Actions\ActionGroup;
 use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Actions\ForceDeleteBulkAction;
 use Filament\Actions\RestoreBulkAction;
+use Filament\Notifications\Notification;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Filters\TrashedFilter;
@@ -65,7 +68,7 @@ class PembayaransTable
                     })
                     ->color(fn($state) => $state > 0 ? 'danger' : 'success'),
 
-                TextColumn::make('po.status_pembayaran')
+                TextColumn::make('status_pembayaran')
                     ->label('Status')
                     ->badge()
                     ->color(fn($state) => match ($state) {
@@ -90,7 +93,7 @@ class PembayaransTable
                         'giro'     => 'Giro',
                     ]),
 
-                SelectFilter::make('po.status_pembayaran')
+                SelectFilter::make('status_pembayaran') // ← pastikan ini SelectFilter, BUKAN TextColumn
                     ->label('Status Pembayaran')
                     ->options([
                         'unpaid'  => 'Belum Bayar',
@@ -99,7 +102,35 @@ class PembayaransTable
                     ]),
             ])
             ->recordActions([
-                EditAction::make(),
+                ActionGroup::make([
+                    EditAction::make()
+                        ->label('Edit')
+                        ->icon('heroicon-o-pencil-square')
+                        ->color('primary'),
+
+
+                    DeleteAction::make()
+                        ->label('Hapus')
+                        ->icon('heroicon-o-trash')
+                        ->color('danger')
+                        ->requiresConfirmation()
+                        ->modalHeading('Hapus Pembayaran?')
+                        ->modalDescription('Pembayaran akan dihapus permanen dan tidak dapat dikembalikan.')
+                        ->modalSubmitActionLabel('Ya, Hapus')
+                        ->successNotification(
+                            Notification::make()
+                                ->title('Berhasil')
+                                ->body('Pembayaran berhasil dihapus.')
+                                ->success()
+                        ),
+
+                ])
+                    ->label('Aksi')
+                    ->icon('heroicon-o-ellipsis-vertical')
+                    ->button()
+                    ->outlined()
+                    ->tooltip('Aksi')
+                    ->dropdownPlacement('bottom-end')
             ])
             ->toolbarActions([
                 BulkActionGroup::make([
