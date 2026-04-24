@@ -52,14 +52,52 @@ class POForm
                             ->prefix('Rp')
                             ->required(),
 
-                        TextInput::make('harga_deal')
+                        TextInput::make('jumlah_bayar')
+                            ->label('Jumlah Bayar')
                             ->numeric()
-                            ->minValue(0)
-                            ->prefix('Rp')
                             ->required()
-                            ->lte('harga_penawaran') // 🔥 tidak boleh lebih besar dari penawaran
+                            ->prefix('Rp')
+                            ->minValue(1)
+                            ->rules([
+                                function () {
+                                    return function (string $attribute, $value, \Closure $fail) {
+                                        $idPo = request()->input('data.id_po');
+                                        if (!$idPo) return;
+
+                                        $po = \App\Models\POModel::find($idPo);
+                                        if (!$po) return;
+
+                                        $totalBayar = \App\Models\PembayaranModel::where('id_po', $idPo)
+                                            ->sum('jumlah_bayar');
+
+                                        $sisa = $po->harga_deal - $totalBayar;
+
+                                        // 🔥 Tidak boleh lebih dari sisa hutang
+                                        if ($value > $sisa) {
+                                            $fail("Jumlah bayar melebihi sisa tagihan. Sisa: Rp " . number_format($sisa, 0, ',', '.'));
+                                        }
+
+                                        // 🔥 Tidak boleh kurang dari harga_deal (total keseluruhan harus = harga_deal)
+                                        // Artinya: pembayaran terakhir harus menutup tepat, tidak boleh kurang jika ini cicilan terakhir
+                                        // ATAU: setiap bayar minimal = harga_deal sekali bayar lunas
+                                        // Pilih logic sesuai kebutuhan:
+
+                                        // ✅ OPSI A: jumlah_bayar tidak boleh kurang dari harga_deal (harus lunas sekaligus)
+                                        if ($value < $po->harga_deal) {
+                                            $fail("Jumlah bayar tidak boleh kurang dari harga deal. Harga deal: Rp " . number_format($po->harga_deal, 0, ',', '.'));
+                                        }
+
+                                        // ✅ OPSI B: jumlah_bayar harus tepat sama dengan sisa (tidak boleh kurang, tidak boleh lebih)
+                                        // if ($value != $sisa) {
+                                        //     $fail("Jumlah bayar harus tepat Rp " . number_format($sisa, 0, ',', '.'));
+                                        // }
+                                    };
+                                }
+                            ])
                             ->validationMessages([
-                                'lte' => 'Harga deal tidak boleh lebih besar dari penawaran',
+                                'required' => 'Jumlah bayar wajib diisi',
+                                'min'      => 'Jumlah bayar harus lebih dari 0',
+                                'numeric'  => 'Jumlah bayar harus berupa angka',
                             ]),
                     ])
                     ->columns(1),

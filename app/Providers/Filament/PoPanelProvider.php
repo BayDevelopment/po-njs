@@ -84,7 +84,7 @@ class PoPanelProvider extends PanelProvider
                 Authenticate::class,
             ])
             ->brandName(new HtmlString(
-                '<span style="font-style: italic; font-weight: 400;">PurchaseOrder</span><span style="font-weight: 700;font-style: italic;">Panel</span>'
+                '<span style="font-style: italic; font-weight: 400;">PO</span><span style="font-weight: 700;font-style: italic;">Panel</span>'
             ));
     }
 }

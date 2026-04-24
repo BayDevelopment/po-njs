@@ -76,7 +76,6 @@ class PembayaranForm
                     ->prefix('Rp')
                     ->minValue(1)
                     ->rules([
-                        // 🔥 jumlah bayar tidak boleh melebihi sisa hutang PO
                         function () {
                             return function (string $attribute, $value, \Closure $fail) {
                                 $idPo = request()->input('data.id_po');
@@ -95,11 +94,6 @@ class PembayaranForm
                                 }
                             };
                         }
-                    ])
-                    ->validationMessages([
-                        'required' => 'Jumlah bayar wajib diisi',
-                        'min'      => 'Jumlah bayar harus lebih dari 0',
-                        'numeric'  => 'Jumlah bayar harus berupa angka',
                     ]),
 
                 // ── TANGGAL PEMBAYARAN ───────────────────

@@ -91,15 +91,50 @@ class PembayaranModel extends Model
     // ── BOOTED ───────────────────────────────────
     protected static function booted()
     {
+        static::saving(function ($pembayaran) {
+            $po = \App\Models\POModel::find($pembayaran->id_po);
+            if (!$po) return;
+
+            $totalBayar = self::where('id_po', $pembayaran->id_po)
+                ->when($pembayaran->exists, fn($q) => $q->where('id_pembayaran', '!=', $pembayaran->id_pembayaran))
+                ->sum('jumlah_bayar');
+
+            $sisa = $po->harga_deal - $totalBayar;
+
+            if ($pembayaran->jumlah_bayar < 1) {
+                \Filament\Notifications\Notification::make()
+                    ->title('Jumlah Bayar Tidak Valid')
+                    ->body('Jumlah bayar harus lebih dari 0.')
+                    ->danger()
+                    ->send();
+
+                throw \Illuminate\Validation\ValidationException::withMessages([
+                    'jumlah_bayar' => 'Jumlah bayar harus lebih dari 0.',
+                ]);
+            }
+
+            if ($pembayaran->jumlah_bayar > $sisa) {
+                \Filament\Notifications\Notification::make()
+                    ->title('Jumlah Bayar Melebihi Tagihan')
+                    ->body('Jumlah bayar melebihi sisa tagihan. Sisa: Rp ' . number_format($sisa, 0, ',', '.'))
+                    ->danger()
+                    ->send();
+
+                throw \Illuminate\Validation\ValidationException::withMessages([
+                    'jumlah_bayar' => 'Jumlah bayar melebihi sisa tagihan. Sisa: Rp ' . number_format($sisa, 0, ',', '.'),
+                ]);
+            }
+        });
+
         static::saved(function ($pembayaran) {
             $po         = $pembayaran->po;
             $totalBayar = \App\Models\PembayaranModel::where('id_po', $pembayaran->id_po)
                 ->sum('jumlah_bayar');
 
             $status = match (true) {
-                $totalBayar <= 0          => 'unpaid',
+                $totalBayar <= 0               => 'unpaid',
                 $totalBayar >= $po->harga_deal => 'paid',
-                default                   => 'partial',
+                default                        => 'partial',
             };
 
             $po->update(['status_pembayaran' => $status]);
