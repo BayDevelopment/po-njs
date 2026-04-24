@@ -157,6 +157,9 @@ class POForm
                             ->maxSize(2048)
                             ->multiple(false)
                             ->required()
+                            ->downloadable()              // 🔥 tombol download
+                            ->openable()                  // 🔥 tombol buka/preview
+                            ->fetchFileInformation(false) // 🔥 stop loading terus-terusan
                             ->rules(['mimes:pdf'])
                             ->validationMessages([
                                 'required' => 'Dokumen PO wajib diupload',
@@ -170,6 +173,9 @@ class POForm
                             ->acceptedFileTypes(['application/pdf'])
                             ->maxSize(2048)
                             ->multiple(false)
+                            ->downloadable()              // 🔥 tombol download
+                            ->openable()                  // 🔥 tombol buka/preview
+                            ->fetchFileInformation(false) // 🔥 stop loading terus-terusan
                             ->rules(['mimes:pdf'])
                             ->visible(fn($get) => $get('status_po') === 'final')
                             ->required(fn($get) => $get('status_po') === 'final')
